@@ -30,3 +30,34 @@ if opcao == "2":
     print("Dados corrompidos intencionalmente")
 
 packet = f"{seq}|{cs}|{data}"
+
+while True:
+    print("\nEnviando pacote:")
+    print(f" SEQ={seq}, CHECKSUM={cs}, DADOS='{data}'")
+
+    # Simulação de atraso artificial
+    if opcao == "3":
+        atraso = random.uniform(2, 5)  # atraso entre 2 e 5 segundos
+        print(f"Inserindo atraso artificial de {atraso:.2f} segundos...")
+        time.sleep(atraso)
+
+    clientSocket.sendto(packet.encode(), (serverName, serverPort))
+
+    try:
+        ack, _ = clientSocket.recvfrom(2048)
+        ack = ack.decode()
+
+        print(f"ACK recebido: {ack}")
+
+        if ack == f"ACK|{seq}":
+            print("ACK correto, enviando próximo pacote")
+            seq = 1 - seq  # alterna entre 0 e 1
+            break
+        else:
+            print("ACK incorreto, retransmitindo")
+
+    except timeout:
+        print("TIMEOUT! Retransmitindo pacote")
+
+clientSocket.close()
+print("Conexão encerrada.")

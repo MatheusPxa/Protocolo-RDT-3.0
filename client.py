@@ -2,7 +2,6 @@ from socket import *
 import time
 import random
 
-# Função de checksum simples
 def checksum(data):
     return sum(ord(c) for c in data) % 256
 
@@ -10,54 +9,70 @@ serverName = "127.0.0.1"
 serverPort = 12000
 
 clientSocket = socket(AF_INET, SOCK_DGRAM)
-clientSocket.settimeout(3)  # timeout de 3 segundos
+clientSocket.settimeout(3)  
 
-seq = 0  # número de sequência (0 ou 1)
+seq = 0  
 
-print("=== MENU ===")
-print("1 - Entrega normal")
-print("2 - Corromper dados")
-print("3 - Inserir atraso artificial")
+print("=== Cliente RDT 3.0 ===")
+
+while True:
+    print("\n=== MENU CANAL ===")
+    print("1 - Entrega normal")
+    print("2 - Corrupção de dados")
+    print("3 - Atraso artificial")
+    print("4 - Perda de pacotes")
+    print("0 - Sair")
+    opcao = input("Escolha a opção do canal: ")
 
 opcao = input("Escolha: ")
 
 data = input("Digite a mensagem: ")
 cs = checksum(data)
 
-# Simulação de corrupção
-if opcao == "2":
-    cs += 1  # altera checksum propositalmente
-    print("Dados corrompidos intencionalmente")
+ if opcao == "0":
+        print("Encerrando cliente...")
+        break
 
-packet = f"{seq}|{cs}|{data}"
+    data = input("Digite a mensagem: ")
+    cs = checksum(data)
 
-while True:
-    print("\nEnviando pacote:")
-    print(f" SEQ={seq}, CHECKSUM={cs}, DADOS='{data}'")
+    if opcao == "2":
+        cs += 1
+        print(">>> Dados corrompidos intencionalmente")
 
-    # Simulação de atraso artificial
-    if opcao == "3":
-        atraso = random.uniform(2, 5)  # atraso entre 2 e 5 segundos
-        print(f"Inserindo atraso artificial de {atraso:.2f} segundos...")
-        time.sleep(atraso)
+    packet = f"{seq}|{cs}|{data}"
 
-    clientSocket.sendto(packet.encode(), (serverName, serverPort))
+    while True:
+        print("\nEnviando pacote:")
+        print(f"  SEQ={seq}, CHECKSUM={cs}, DADOS='{data}'")
 
-    try:
-        ack, _ = clientSocket.recvfrom(2048)
-        ack = ack.decode()
+        if opcao == "3":
+            atraso = random.uniform(2, 5)
+            print(f">>> Inserindo atraso artificial de {atraso:.2f} segundos...")
+            time.sleep(atraso)
 
-        print(f"ACK recebido: {ack}")
+        if opcao == "4":
+            if random.random() < 0.3:  
+                print(">>> Pacote perdido intencionalmente! Retransmitindo...")
+                time.sleep(1)
+                continue
 
-        if ack == f"ACK|{seq}":
-            print("ACK correto, enviando próximo pacote")
-            seq = 1 - seq  # alterna entre 0 e 1
-            break
-        else:
-            print("ACK incorreto, retransmitindo")
+        clientSocket.sendto(packet.encode(), (serverName, serverPort))
 
-    except timeout:
-        print("TIMEOUT! Retransmitindo pacote")
+        try:
+            ack, _ = clientSocket.recvfrom(2048)
+            ack = ack.decode()
+            print(f"ACK recebido: {ack}")
+
+            if ack == f"ACK|{seq}":
+                print("ACK correto! Enviando próximo pacote...")
+                seq = 1 - seq
+                break
+            else:
+                print("ACK incorreto! Retransmitindo pacote...")
+
+        except timeout:
+            print("TIMEOUT! Retransmitindo pacote...")
 
 clientSocket.close()
-print("Conexão encerrada.")
+print("Cliente encerrado.")

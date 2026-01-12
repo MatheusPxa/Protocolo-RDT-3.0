@@ -9,9 +9,9 @@ serverName = "127.0.0.1"
 serverPort = 12000
 
 clientSocket = socket(AF_INET, SOCK_DGRAM)
-clientSocket.settimeout(3)  
+clientSocket.settimeout(3)
 
-seq = 0  
+seq = 0
 
 print("=== Cliente RDT 3.0 ===")
 
@@ -22,14 +22,10 @@ while True:
     print("3 - Atraso artificial")
     print("4 - Perda de pacotes")
     print("0 - Sair")
+    
     opcao = input("Escolha a opção do canal: ")
 
-opcao = input("Escolha: ")
-
-data = input("Digite a mensagem: ")
-cs = checksum(data)
-
- if opcao == "0":
+    if opcao == "0":
         print("Encerrando cliente...")
         break
 
@@ -51,11 +47,10 @@ cs = checksum(data)
             print(f">>> Inserindo atraso artificial de {atraso:.2f} segundos...")
             time.sleep(atraso)
 
-        if opcao == "4":
-            if random.random() < 0.3:  
-                print(">>> Pacote perdido intencionalmente! Retransmitindo...")
-                time.sleep(1)
-                continue
+        if opcao == "4" and random.random() < 0.3:
+            print(">>> Pacote perdido intencionalmente! Retransmitindo...")
+            time.sleep(1)
+            continue
 
         clientSocket.sendto(packet.encode(), (serverName, serverPort))
 

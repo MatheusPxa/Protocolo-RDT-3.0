@@ -1,5 +1,6 @@
 from socket import *
 import time
+import random
 
 def checksum(data):
     return sum(ord(c) for c in data) % 256
